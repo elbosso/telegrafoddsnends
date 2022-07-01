@@ -40,7 +40,10 @@ components=$(curl -k -i --header 'Private-Token: xxxx-xxxx-xxxxxxxxxx' "https://
 while read -r component; do
 encoded=$( rawurlencode "$component" )
 projectname=$(curl -k -i --header 'Private-Token: xxxx-xxxx-xxxxxxxxxx' "https://gitlab.fritz.box/api/v4/projects/$encoded" 2>/dev/null|grep name|jq .name |cut -d '"' -f 2)
-count=$(curl -k -i -s --header 'Private-Token: xxxx-xxxx-xxxxxxxxxx' "https://gitlab.fritz.box/api/v4/projects/$encoded/issues?state=opened&scope=all&per_page=1" 2>/dev/null|grep "x-total:"|cut -d ' ' -f 2)
+count=$(curl -k -i -s --header 'Private-Token: xxxx-xxxx-xxxxxxxxxx' "https://gitlab.fritz.box/api/v4/projects/$encoded/issues?state=opened&scope=all&per_page=1" 2>/dev/null|grep "x-total:"|cut -d ' ' -f 2| sed -e 's/\s$//g')
 encoded=$( lineformatencode "$component" )
 echo "openIssues,projectId=$encoded,projectName=$projectname count=$count"
+curl -k -i --header 'Private-Token: xxxx-xxxx-xxxxxxxxxx' -XPOST http://192.168.10.2:8086/write?db=monitoring --data-binary "openIssues,projectId=$encoded,projectName=$projectname count=$count"
+
 done <<< "$components"
+
